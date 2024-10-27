@@ -1,0 +1,132 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+/* Body and Header Styling */
+body {
+    background-color: #121212;
+    color: #e0e0e0;
+    line-height: 1.6;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    width: 100%;
+    background-color: #1e1e1e;
+    color: #fff;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+h1 {
+    font-size: 1.8rem;
+}
+
+/* Series Info Styling */
+.series-info {
+    background-color: #1e1e1e;
+    padding: 1rem;
+    margin: 1.5rem;
+    width: 90%;
+    max-width: 800px;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.series-name {
+    font-size: 1.6rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.series-theme {
+    font-size: 1.2rem;
+    font-style: italic;
+    margin-bottom: 0.3rem;
+}
+
+.series-date {
+    font-size: 1rem;
+    color: #aaa;
+}
+
+/* Table Styling */
+.series-table {
+    margin: 1.5rem;
+    width: 90%;
+    max-width: 800px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+thead {
+    background-color: #333;
+    color: #fff;
+}
+
+td, th {
+    padding: 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid #444;
+}
+
+tr:hover {
+    background-color: #2a2a2a;
+}
+
+/* Episode Placeholder Styling */
+.episode-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #444;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+
+/* Action Buttons */
+.action-buttons {
+    margin-top: 1rem;
+    text-align: center;
+}
+
+button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin: 0.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+/* Add styling for greyscale images */
+.grayscale {
+    filter: grayscale(100%);
+}
+
+/* Add styling for episode images */
+.episode-image {
+    width: 50px; /* Adjust size as needed */
+    height: 50px;
+    border-radius: 50%;
+    margin: 5px;
+}
