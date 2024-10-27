@@ -135,3 +135,25 @@ button:hover {
     position: relative;
     border: 6px solid green;
 }
+
+.watched-info {
+    font-style: italic;
+    color: #aaa;
+    font-size: smaller;
+}
+
+/* Styles for the watched percentage progress bar */
+.progress-bar {
+    position: relative;
+    height: 4px;
+    width: 100%;
+    background: #888; /* Change this to your desired shade of mid-grey */
+    border-radius: 2px; /* Optional: adds a slight roundness to the bar */
+    overflow: hidden; /* Ensures that the fill doesn't overflow the container */
+}
+
+.progress-fill {
+    height: 100%;
+    background: green; /* Change this to your desired shade of green */
+    transition: width 0.3s ease-in-out; /* Smooth transition when the watched percentage changes */
+}

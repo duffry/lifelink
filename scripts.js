@@ -49,7 +49,7 @@ function fetchSeriesData(userAccessCode, username) {
                 // Loop through each series and add its info and table to the main content
                 seriesList.forEach(series => {
                     console.log('Adding series:', series);
-                    displaySeriesInfo(series, mainContent);
+                    displaySeriesInfo(series, mainContent, username);
                     displaySeriesTable(series, mainContent, userAccessCode, username);
                 });
             } else {
@@ -60,7 +60,7 @@ function fetchSeriesData(userAccessCode, username) {
 }
 
 // Function to display the series info section
-function displaySeriesInfo(series, container) {
+function displaySeriesInfo(series, container, username) {
     const seriesInfoSection = document.createElement('section');
     seriesInfoSection.classList.add('series-info');
 
@@ -72,15 +72,60 @@ function displaySeriesInfo(series, container) {
     seriesTheme.classList.add('series-theme');
     seriesTheme.textContent = series.theme_description;
 
-    // const seriesDate = document.createElement('p');
-    // seriesDate.classList.add('series-date');
-    // seriesDate.textContent = `First aired: ${series.first_airing_date}`;
-
     seriesInfoSection.appendChild(seriesName);
     seriesInfoSection.appendChild(seriesTheme);
-    // seriesInfoSection.appendChild(seriesDate);
 
+    // Calculate and display the watched percentage if username is provided
+    if (username && series.videos) {
+        const totalVideos = series.videos.length;
+        const watchedVideos = series.videos.filter(video => video.watched_state === 1).length;
+        const watchedPercentage = totalVideos > 0 ? Math.round((watchedVideos / totalVideos) * 100) : 0;
+
+        const watchedInfo = document.createElement('p');
+        watchedInfo.classList.add('watched-info');
+        watchedInfo.textContent = `Watched: ${watchedPercentage}%`;
+
+        seriesInfoSection.appendChild(watchedInfo);
+
+        // Create a progress bar
+        const progressBar = document.createElement('div');
+        progressBar.classList.add('progress-bar');
+        progressBar.style.position = 'relative';
+        progressBar.style.height = '4px';
+        progressBar.style.width = '100%';
+        progressBar.style.background = 'midgrey';
+
+        const progressFill = document.createElement('div');
+        progressFill.classList.add('progress-fill');
+        progressFill.style.height = '100%';
+        progressFill.style.width = `${watchedPercentage}%`;
+        progressFill.style.background = 'green';
+
+        progressBar.appendChild(progressFill);
+        seriesInfoSection.appendChild(watchedInfo);
+        seriesInfoSection.appendChild(progressBar);
+    }
     container.appendChild(seriesInfoSection);
+}
+
+// Function to update watched percentage
+function updateWatchedPercentage() {$1
+    const seriesInfoSections = document.querySelectorAll('.series-info');
+    seriesInfoSections.forEach(section => {
+        const seriesVideos = section.parentElement.querySelectorAll('.episode-image');
+        const totalVideos = seriesVideos.length;
+        const watchedVideos = Array.from(seriesVideos).filter(video => video.classList.contains('watched')).length;
+        const watchedPercentage = totalVideos > 0 ? Math.round((watchedVideos / totalVideos) * 100) : 0;
+        const watchedInfo = section.querySelector('.watched-info');
+        if (watchedInfo) {
+            watchedInfo.textContent = `Watched: ${watchedPercentage}%`;
+        }
+
+        const progressFill = section.querySelector('.progress-fill');
+        if (progressFill) {
+            progressFill.style.width = `${watchedPercentage}%`;
+        }
+    });
 }
 
 // Function to display the series table
@@ -204,7 +249,6 @@ function displaySeriesTable(series, container, userAccessCode, username) {
     container.appendChild(seriesTableSection);
 }
 
-
 // Function to prompt the user to add a video link
 function addVideoLink(hermitId, seriesId, episodeNumber) {
     const videoUrl = prompt('Please enter the YouTube video URL:');
@@ -262,6 +306,8 @@ function toggleWatchedState(username, videoId, imgElement) {
         if (data.success) {
             // Toggle watched state visually without reloading the page
             imgElement.classList.toggle('watched');
+            // Recalculate and update watched percentage
+            updateWatchedPercentage();
         } else {
             console.error('Failed to update watched state:', data.message);
         }
