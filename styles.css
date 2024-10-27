@@ -35,7 +35,7 @@ h1 {
     margin: 1.5rem;
     width: 90%;
     max-width: 800px;
-    text-align: center;
+    text-align: left;
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -125,8 +125,13 @@ button:hover {
 
 /* Add styling for episode images */
 .episode-image {
-    width: 50px; /* Adjust size as needed */
-    height: 50px;
+    width: 40px; /* Adjust size as needed */
+    height: 40px;
     border-radius: 50%;
-    margin: 5px;
+    margin: 0px;
+}
+
+.episode-image.watched {
+    position: relative;
+    border: 6px solid green;
 }

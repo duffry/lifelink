@@ -1,7 +1,28 @@
-// Fetch the latest series information from the backend and update the page
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Fetching series data...');
-    fetch('get_series.php')
+    // Get the username from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get('u');
+    let userAccessCode = 0;
+
+    if (username) {
+        // Fetch user access information
+        fetch(`get_user_access.php?u=${username}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('User access data:', data);
+                userAccessCode = data.access_code || 0;
+                fetchSeriesData(userAccessCode, username);
+            })
+            .catch(error => console.error('Error fetching user access data:', error));
+    } else {
+        fetchSeriesData(userAccessCode);
+    }
+});
+
+function fetchSeriesData(userAccessCode, username) {
+    const url = username ? `get_series.php?u=${username}` : 'get_series.php';
+    fetch(url)
         .then(response => {
             console.log('Response received:', response);
             return response.json();
@@ -29,14 +50,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 seriesList.forEach(series => {
                     console.log('Adding series:', series);
                     displaySeriesInfo(series, mainContent);
-                    displaySeriesTable(series, mainContent);
+                    displaySeriesTable(series, mainContent, userAccessCode, username);
                 });
             } else {
                 console.log('No series data found.');
             }
         })
         .catch(error => console.error('Error fetching series data:', error));
-});
+}
 
 // Function to display the series info section
 function displaySeriesInfo(series, container) {
@@ -51,83 +72,124 @@ function displaySeriesInfo(series, container) {
     seriesTheme.classList.add('series-theme');
     seriesTheme.textContent = series.theme_description;
 
-    const seriesDate = document.createElement('p');
-    seriesDate.classList.add('series-date');
-    seriesDate.textContent = `First aired: ${series.first_airing_date}`;
+    // const seriesDate = document.createElement('p');
+    // seriesDate.classList.add('series-date');
+    // seriesDate.textContent = `First aired: ${series.first_airing_date}`;
 
     seriesInfoSection.appendChild(seriesName);
     seriesInfoSection.appendChild(seriesTheme);
-    seriesInfoSection.appendChild(seriesDate);
+    // seriesInfoSection.appendChild(seriesDate);
 
     container.appendChild(seriesInfoSection);
 }
 
 // Function to display the series table
-function displaySeriesTable(series, container) {
+function displaySeriesTable(series, container, userAccessCode, username) {
     const seriesTableSection = document.createElement('section');
     seriesTableSection.classList.add('series-table');
 
-    // Ensure hermits and videos are initialized to empty arrays if not present
     series.hermits = series.hermits || [];
     series.videos = series.videos || [];
 
-    console.log('Series hermits:', series.hermits);
-    console.log('Series videos:', series.videos);
-
-    // Determine maximum episode number from video data
     const maxEpisodeNumber = series.videos.reduce((max, video) => Math.max(max, Number(video.episode_number)), 1);
-    console.log('Max Episode Number:', maxEpisodeNumber);
 
-    // Create the table header based on the max episode number
     const table = document.createElement('table');
     const thead = document.createElement('thead');
     const headerRow = document.createElement('tr');
-    headerRow.innerHTML = `<th></th>`; // Empty header for hermit names
-
+    headerRow.innerHTML = `<th></th>`;
     for (let i = 1; i <= maxEpisodeNumber; i++) {
         headerRow.innerHTML += `<th>E${i}</th>`;
     }
     thead.appendChild(headerRow);
     table.appendChild(thead);
-    console.log('Header Row:', headerRow);
 
-    // Create the table body
     const tbody = document.createElement('tbody');
     const hermitsArray = Array.isArray(series.hermits) ? series.hermits : Object.values(series.hermits);
-    console.log('Hermits Array:', hermitsArray);
 
     hermitsArray.forEach(hermit => {
-        console.log('Processing hermit:', hermit);
         const row = document.createElement('tr');
-
-        // Hermit name column
         const hermitCell = document.createElement('td');
         hermitCell.textContent = hermit.display_name;
         row.appendChild(hermitCell);
 
-        // Episode columns
         for (let i = 1; i <= maxEpisodeNumber; i++) {
             const episodeCell = document.createElement('td');
             const img = document.createElement('img');
-            img.src = hermit.image_color; // Use image link from the hermit object
+            img.src = hermit.image_color;
             img.alt = hermit.display_name;
             img.classList.add('episode-image');
 
-            // Convert ID and episode number to numbers for consistent matching
             const video = series.videos.find(v => Number(v.hermit_id) === Number(hermit.hermit_id) && Number(v.episode_number) === i);
-            
+
+            let pressStartTime;
+            let longPressDetected = false;
+
             if (video && video.video_link) {
-                console.log(`Video found for Hermit ID ${hermit.hermit_id}, Episode ${i}`);
-                img.classList.remove('grayscale'); // Colored image if video exists
-                img.addEventListener('click', () => {
-                    window.open(video.video_link, '_blank');
+                img.classList.remove('grayscale');
+
+                img.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
                 });
+
+                img.addEventListener('mousedown', (e) => {
+                    if (e.button !== 0) return; // Only respond to left mouse button clicks
+                    pressStartTime = Date.now();
+                    longPressDetected = false;
+                    console.log("Mouse down event detected, timestamp recorded");
+                });
+
+                img.addEventListener('touchstart', (e) => {
+                    pressStartTime = Date.now();
+                    longPressDetected = false;
+                });
+
+                img.addEventListener('mouseup', (e) => {
+                    if (e.button !== 0) return; // Only respond to left mouse button clicks
+                    const pressDuration = Date.now() - pressStartTime;
+                    console.log("Mouse up event detected, duration:", pressDuration, "ms");
+                    if (pressDuration >= 1000) {
+                        longPressDetected = true;
+                        console.log("Long press detected, toggling watched state");
+                        toggleWatchedState(username, video.video_id, img); // Correct call
+                    } else {
+                        longPressDetected = false;
+                    }
+                });
+
+                img.addEventListener('touchend', (e) => {
+                    const pressDuration = Date.now() - pressStartTime;
+                    if (pressDuration >= 1000) {
+                        longPressDetected = true;
+                        toggleWatchedState(username, video.video_id, img);
+                    } else {
+                        longPressDetected = false;
+                    }
+                });
+
+                img.addEventListener('click', (e) => {
+                    if (e.button !== 0) return; // Only respond to left mouse button clicks
+                    if (!longPressDetected) {
+                        console.log("Regular click, opening video link");
+                        if (video.video_link) {
+                            window.open(video.video_link, '_blank');
+                        } else {
+                            console.log("Video link is undefined or not available");
+                        }
+                    } else {
+                        console.log("Click prevented due to long press");
+                    }
+                });
+
+                if (video.watched_state === 1) {
+                    img.classList.add('watched');
+                }
             } else {
-                console.log(`No video found for Hermit ID ${hermit.hermit_id}, Episode ${i}`);
-                img.classList.add('grayscale'); // Greyscale if no video exists
-                img.addEventListener('click', () => {
-                    addVideoLink(hermit.hermit_id, series.series_id, i);
-                });
+                img.classList.add('grayscale');
+                if (userAccessCode > 0) {
+                    img.addEventListener('click', () => {
+                        addVideoLink(hermit.hermit_id, series.series_id, i);
+                    });
+                }
             }
 
             episodeCell.appendChild(img);
@@ -141,6 +203,7 @@ function displaySeriesTable(series, container) {
     seriesTableSection.appendChild(table);
     container.appendChild(seriesTableSection);
 }
+
 
 // Function to prompt the user to add a video link
 function addVideoLink(hermitId, seriesId, episodeNumber) {
@@ -183,4 +246,25 @@ function addVideoLink(hermitId, seriesId, episodeNumber) {
 function isValidYouTubeUrl(url) {
     const pattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.?be)\/.+$/;
     return pattern.test(url) && !/[?&](t=|start=|end=)/.test(url);
+}
+
+// Function to toggle watched state
+function toggleWatchedState(username, videoId, imgElement) {
+    fetch('update_watched_status.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, video_id: videoId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Toggle watched state visually without reloading the page
+            imgElement.classList.toggle('watched');
+        } else {
+            console.error('Failed to update watched state:', data.message);
+        }
+    })
+    .catch(error => console.error('Error updating watched state:', error));
 }
